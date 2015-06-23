@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pip:Resource xmlns:pip="http://nrg.wustl.edu/pipeline">
+	<pip:name>functional_batch_script_generator.sh</pip:name>
+	<pip:location>@PIPELINE_DIR_PATH@@/@catalog@/@HCP_QC_PARALLEL@/@Wrapper_QC@/@resources</pip:location>
+	<pip:type>Executable</pip:type>
+	<pip:description>Generates QC Assessor</pip:description>
+	<pip:input>
+		<pip:argument id="paramsfile">
+			<pip:description>Path to params file</pip:description>
+		</pip:argument>
+		<pip:argument id="scancount" >
+			<pip:description>No of EPI scans</pip:description>
+		</pip:argument>
+		<pip:argument id="batchfile">
+			<pip:description>Path to batch file</pip:description>
+		</pip:argument>			
+	</pip:input>
+</pip:Resource>
+
+

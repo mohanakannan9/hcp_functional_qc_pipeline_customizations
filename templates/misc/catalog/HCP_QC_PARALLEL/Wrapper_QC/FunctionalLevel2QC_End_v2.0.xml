@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSPY v2004 rel. 3 U (http://www.xmlspy.com) by Mohana Ramaratnam (Washington University) -->
+<Pipeline xmlns="http://nrg.wustl.edu/pipeline" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://nrg.wustl.edu/pipeline
+..\..\schema\pipeline.xsd" xmlns:nrgString="http://www.xnat.org/java/org.nrg.pipeline.utils.StringUtils" xmlns:fileUtils="http://www.xnat.org/java/org.nrg.imagingtools.utils.FileUtils" xmlns:ext="org.nrg.validate.utils.ProvenanceUtils">
+	<name>FunctionalLevel2QC_End_v2.0</name>
+	<!--Should be  Name of the pipeline XML file -->
+	<location>Wrapper_QC</location>
+	<!-- Filesystem path to the pipeline XML -->
+	<description>Pipeline which ends the Level 2 QC for Functional scans of IntraDB</description>
+	<documentation>
+	   <authors>
+	   	<author>
+	   		<lastname>Mohana</lastname>
+			<firstname>Ramaratnam</firstname>
+	   	</author>
+	   </authors>
+	   	<version>1.0</version>
+		<input-parameters>
+			<parameter>
+				<name>xnat_id</name>
+				<values>
+					<schemalink>xnat:mrSessionData.ID</schemalink>
+				</values>
+				<description>XNAT MRSession ID</description>
+			</parameter>
+			<parameter>
+				<name>sessionId</name>
+				<values>
+					<schemalink>xnat:mrSessionData.label</schemalink>
+				</values>
+				<description>Projects MRSession ID</description>
+			</parameter>
+			<parameter>
+				<name>project</name>
+				<values>
+					<schemalink>xnat:mrSessionData.project</schemalink>
+				</values>
+				<description>XNAT MRSession Project </description>
+			</parameter>
+			<parameter>
+				<name>functional_scan_type</name>
+				<values>
+					<csv>MPRAGE</csv>
+				</values>
+				<description>Scantype of the Structural Scans</description>
+			</parameter>
+		</input-parameters>
+	</documentation>
+	<outputFileNamePrefix>^concat(/Pipeline/parameters/parameter[name='builddir']/values/unique/text(),'/',/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),'/logs/',/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),'_FunctionalLevel2QC_End')^</outputFileNamePrefix>
+	<parameters>
+		<parameter>
+			<name>outdir</name>
+			<values>
+				<unique>^concat(/Pipeline/parameters/parameter[name='builddir']/values/unique/text(),'/',/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),'/Level2QC')^</unique>
+			</values>
+		</parameter> 
+		<parameter>
+			<name>email_list_file</name>
+			<values><unique>^concat(/Pipeline/parameters/parameter[name='outdir']/values/unique/text(),'/qc.lst')^</unique></values>
+			<description>Email list file</description>
+		</parameter>
+		<parameter>
+				<name>workdir</name>
+				<values><unique>^concat(/Pipeline/parameters/parameter[name='outdir']/values/unique/text(),'/FUNCTIONAL')^</unique></values>
+		</parameter>
+		<parameter>
+			<name>emailreportfile</name>
+			<values>
+				<unique>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),fileUtils:GetFileSeparator(),/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),'_report.dat')^</unique>
+			</values>
+			<description>Intermediate Schematron XSL File</description>
+		</parameter>		
+	</parameters>	
+	<steps>
+		<step id="CLEANUP_1" description="Clean up"  >
+			<resource name="rm" location="commandlineTools">
+				<argument id="file">
+					<value>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/RAWNIFTI')^</value>
+				</argument>
+				<argument id="r"/>
+				<argument id="f"/>
+			</resource>
+			<resource name="rm" location="commandlineTools">
+				<argument id="file">
+					<value>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/RAWDICOM')^</value>
+				</argument>
+				<argument id="r"/>
+				<argument id="f"/>
+			</resource>
+		</step>
+		<step id="5" description="Get Email notification list">
+			<resource name="XnatRestClient" location="xnat_tools">
+				<argument id="host">
+						<value>^/Pipeline/parameters/parameter[name='host']/values/unique/text()^</value>
+				</argument>
+				<argument id="password">
+						<value>^/Pipeline/parameters/parameter[name='pwd']/values/unique/text()^</value>
+				</argument>
+				<argument id="user">
+						<value>^/Pipeline/parameters/parameter[name='user']/values/unique/text()^</value>
+				</argument>
+				<argument id="method">
+						<value>GET</value>
+				</argument>
+				<argument id="remote">
+						<value>^concat('"/data/archive/projects/',/Pipeline/parameters/parameter[name='project']/values/unique/text(),'/resources/notifications/files/qc.lst"')^</value>
+				</argument>
+				<argument id="redirect_output">
+						<value>^/Pipeline/parameters/parameter[name='email_list_file']/values/unique/text()^</value>
+				</argument>
+
+	         </resource>
+	</step> 
+		<step id="5a" description="Notify" precondition="^/Pipeline/parameters/parameter[name='outlier_exists']/values/unique/text()=1^">
+			<resource name="Notifier" location="notifications">
+               			 <argument id="user">
+					<value>^/Pipeline/parameters/parameter[name='user']/values/unique/text()^</value>
+				</argument>
+               			 <argument id="password">
+					<value>^/Pipeline/parameters/parameter[name='pwd']/values/unique/text()^</value>
+				</argument>
+				<argument id="tolist">
+					<value>^/Pipeline/parameters/parameter[name='email_list_file']/values/unique/text()^</value>
+				</argument>
+				<argument id="cc">
+					<value>^/Pipeline/parameters/parameter[name='adminemail']/values/unique/text()^</value>
+				</argument>
+				<argument id="from">
+					<value>^/Pipeline/parameters/parameter[name='adminemail']/values/unique/text()^</value>
+				</argument>
+				<argument id="subject">
+					<value>^concat(/Pipeline/parameters/parameter[name='xnatserver']/values/unique/text(), ' update: ', /Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),' Outliers exist')^</value>
+				</argument>
+				<argument id="host">
+					<value>^/Pipeline/parameters/parameter[name='mailhost']/values/unique/text()^</value>
+				</argument>
+				<argument id="body">
+					<value>^concat('Dear ', /Pipeline/parameters/parameter[name='xnatserver']/values/unique/text(),' User, &lt;br&gt; &lt;p&gt; &lt;br&gt; &lt;p&gt; Level2 QC Outliers exist for  ',/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),'.:&lt;/p&gt;&lt;br&gt; &lt;p&gt;See the attachment for details. Additional details for this session are available  &lt;a href="',/Pipeline/parameters/parameter[name='host']/values/unique/text(),'/app/action/DisplayItemAction/search_element/xnat:mrSessionData/search_field/xnat:mrSessiondata.ID/search_value/',/Pipeline/parameters/parameter[name='xnat_id']/values/unique/text(),'"&gt;', 'here.&lt;/a&gt; &lt;/p&gt;&lt;br&gt;', /Pipeline/parameters/parameter[name='xnatserver']/values/unique/text(),' Team.')^ 
+					</value>
+				</argument>
+				<argument id="attachment">
+					<value>^/Pipeline/parameters/parameter[name='emailreportfile']/values/unique/text()^</value>
+				</argument>				
+			</resource>
+		</step>	
+		<step id="6" description="Notify" >
+			<resource name="Notifier" location="notifications">
+                <argument id="user">
+					<value>^/Pipeline/parameters/parameter[name='user']/values/unique/text()^</value>
+				</argument>
+                <argument id="password">
+					<value>^/Pipeline/parameters/parameter[name='pwd']/values/unique/text()^</value>
+				</argument>
+				<argument id="tolist">
+					<value>^/Pipeline/parameters/parameter[name='email_list_file']/values/unique/text()^</value>
+				</argument>
+				<argument id="cc">
+					<value>^/Pipeline/parameters/parameter[name='adminemail']/values/unique/text()^</value>
+				</argument>
+				<argument id="from">
+					<value>^/Pipeline/parameters/parameter[name='adminemail']/values/unique/text()^</value>
+				</argument>
+				<argument id="subject">
+					<value>^concat(/Pipeline/parameters/parameter[name='xnatserver']/values/unique/text(), ' update: ', /Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),' Level2 QC available')^</value>
+				</argument>
+				<argument id="host">
+					<value>^/Pipeline/parameters/parameter[name='mailhost']/values/unique/text()^</value>
+				</argument>
+				<argument id="body">
+					<value>^concat('Dear ', /Pipeline/parameters/parameter[name='xnatserver']/values/unique/text(),' User, &lt;br&gt; &lt;p&gt; &lt;br&gt; &lt;p&gt; Level2 QC metrics are available for  ',/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),'.:&lt;/p&gt;&lt;br&gt; &lt;p&gt; Additional details for this session are available  &lt;a href="',/Pipeline/parameters/parameter[name='host']/values/unique/text(),'/app/action/DisplayItemAction/search_element/xnat:mrSessionData/search_field/xnat:mrSessiondata.ID/search_value/',/Pipeline/parameters/parameter[name='xnat_id']/values/unique/text(),'"&gt;', 'here.&lt;/a&gt; &lt;/p&gt;&lt;br&gt;', /Pipeline/parameters/parameter[name='xnatserver']/values/unique/text(),' Team.')^ 
+					</value>
+				</argument>
+			</resource>
+		</step>
+		<step id="Notify" description="Notify"  >
+			<resource name="Notifier" location="notifications" >
+				<argument id="user">
+					<value>^/Pipeline/parameters/parameter[name='user']/values/unique/text()^</value>
+				</argument>
+				<argument id="password">
+					<value>^/Pipeline/parameters/parameter[name='pwd']/values/unique/text()^</value>
+				</argument>
+				<argument id="to">
+					<value>^/Pipeline/parameters/parameter[name='useremail']/values/unique/text()^</value>
+				</argument>
+				<argument id="cc">
+					<value>^/Pipeline/parameters/parameter[name='adminemail']/values/unique/text()^</value>
+				</argument>
+				<argument id="from">
+					<value>^/Pipeline/parameters/parameter[name='adminemail']/values/unique/text()^</value>
+				</argument>
+				<argument id="subject">
+					<value>^concat(/Pipeline/parameters/parameter[name='xnatserver']/values/unique/text(), ' update: ', /Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),' Level 2 QC complete')^</value>
+				</argument>
+				<argument id="host">
+					<value>^/Pipeline/parameters/parameter[name='mailhost']/values/unique/text()^</value>
+				</argument>
+				<argument id="body">
+					<value>^concat('Dear ',/Pipeline/parameters/parameter[name='userfullname']/values/unique/text(),',&lt;br&gt; &lt;p&gt;Level 2 QC metrics are available for ', /Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),'.&lt;/p&gt;&lt;br&gt; &lt;p&gt;Details for this session are available at &lt;a href="',/Pipeline/parameters/parameter[name='host']/values/unique/text(),'/app/action/DisplayItemAction/search_element/xnat:mrSessionData/search_field/xnat:mrSessiondata.ID/search_value/',/Pipeline/parameters/parameter[name='xnat_id']/values/unique/text(),'"&gt;', 'the ', /Pipeline/parameters/parameter[name='xnatserver']/values/unique/text(),' website.&lt;/a&gt; &lt;/p&gt;&lt;br&gt;', /Pipeline/parameters/parameter[name='xnatserver']/values/unique/text(),' Team.')^ 
+					</value>
+				</argument>
+			</resource>
+		</step> 
+	</steps>
+</Pipeline>

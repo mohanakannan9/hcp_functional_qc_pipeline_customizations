@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSPY v2004 rel. 3 U (http://www.xmlspy.com) by Mohana Ramaratnam (Washington University) -->
+<Pipeline xmlns="http://nrg.wustl.edu/pipeline" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://nrg.wustl.edu/pipeline
+..\..\schema\pipeline.xsd" xmlns:nrgString="http://www.xnat.org/java/org.nrg.pipeline.utils.StringUtils" xmlns:fileUtils="http://www.xnat.org/java/org.nrg.imagingtools.utils.FileUtils" xmlns:ext="org.nrg.validate.utils.ProvenanceUtils">
+	<name>Level2QCLauncher</name>
+	<!--Should be  Name of the pipeline XML file -->
+	<location>Wrapper_QC</location>
+	<!-- Filesystem path to the pipeline XML -->
+	<description>Pipeline which launches the Level 2 QC for IntraDB</description>
+	 <resourceRequirements>
+           <property name="DRMAA_JobTemplate_JobCategory">hcp_resubmit_q</property>
+	 </resourceRequirements>
+	<documentation>
+	   <authors>
+	   	<author>
+	   		<lastname>Tony</lastname>
+			<firstname>Wilson</firstname>
+	   	</author>
+	   	<author>
+	   		<lastname>Mohana</lastname>
+			<firstname>Ramaratnam</firstname>
+	   	</author>
+	   </authors>
+	   	<version>2.0</version>
+		<input-parameters>
+			<parameter>
+				<name>xnat_id</name>
+				<values>
+					<schemalink>xnat:mrSessionData.ID</schemalink>
+				</values>
+				<description>XNAT MRSession ID</description>
+			</parameter>
+			<parameter>
+				<name>sessionId</name>
+				<values>
+					<schemalink>xnat:mrSessionData.label</schemalink>
+				</values>
+				<description>Projects MRSession ID</description>
+			</parameter>
+			<parameter>
+				<name>project</name>
+				<values>
+					<schemalink>xnat:mrSessionData.project</schemalink>
+				</values>
+				<description>XNAT MRSession Project </description>
+			</parameter>
+			<parameter>
+				<name>functional_scan_type</name>
+				<values>
+					<csv>tfMRI</csv>
+				</values>
+				<description>Scantype of the Functional Scans</description>
+			</parameter>
+			<parameter>
+				<name>fieldMap_scan_type</name>
+				<values>
+					<csv>FieldMap</csv>
+				</values>
+				<description>Scantype of the FieldMap Scans</description>
+			</parameter>
+		</input-parameters>
+	</documentation>
+	<xnatInfo appliesTo="xnat:mrSessionData">
+			<generatesElements>
+				<element>xnat:qcAssessmentData</element>
+			</generatesElements>
+	</xnatInfo>
+	<outputFileNamePrefix>^concat(/Pipeline/parameters/parameter[name='builddir']/values/unique/text(),'/',/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),'/logs/',/Pipeline/parameters/parameter[name='sessionId']/values/unique/text())^</outputFileNamePrefix>
+	<!-- Description of the Pipeilne -->
+	<parameters>
+		<!-- Supply the following parameters 	-->
+		<!-- Default section -->
+		<parameter>
+			<name>aliasHost</name>
+			<values>
+				<unique>^/Pipeline/parameters/parameter[name='host']/values/unique/text()^</unique>
+			</values>
+			<description>AliasHost</description>
+		</parameter>
+		<parameter>
+			<name>init</name>
+			<values>
+				<unique>0</unique>
+			</values>
+			<description>Decides if the other pipelets should invoke the INIT Step  or not</description>
+		</parameter>
+		<parameter>
+			<name>outdir</name>
+			<values>
+				<unique>^concat(/Pipeline/parameters/parameter[name='builddir']/values/unique/text(),'/',/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),'/Level2QC')^</unique>
+			</values>
+		</parameter> 
+		<parameter>
+			<name>passwd</name>
+			<values>
+				<unique>^/Pipeline/parameters/parameter[name='pwd']/values/unique/text()^</unique>
+			</values>
+		</parameter> 
+		<parameter>
+			<name>datestamp_folder</name>
+			<values>
+				<unique>^if (count(/Pipeline/parameters/parameter[name='use_datestamp']/values/unique/text()) > 0) then /Pipeline/parameters/parameter[name='use_datestamp']/values/unique/text() else concat(translate(ext:GetDate(),'-',''),translate(ext:GetTime(),':',''))^</unique>
+			</values>
+		</parameter>
+ 		<parameter>
+   			<name>subjectlabel</name>
+   			<values>
+   				<unique>^fileUtils:GetColumn(/Pipeline/parameters/parameter[name='host']/values/unique/text(), /Pipeline/parameters/parameter[name='user']/values/unique/text(), /Pipeline/parameters/parameter[name='pwd']/values/unique/text(),concat('REST/experiments?ID=',/Pipeline/parameters/parameter[name='xnat_id']/values/unique/text(),'&amp;columns=subject_label,subject_ID&amp;format=json'),'subject_label,subject_ID')^</unique>
+   			</values>
+   		</parameter> 
+		<parameter>
+			<name>email_list_file</name>
+			<values><unique>^concat(/Pipeline/parameters/parameter[name='outdir']/values/unique/text(),'/qc.lst')^</unique></values>
+			<description>Email list file</description>
+		</parameter>
+	</parameters>
+	<steps>
+		<step id="0a" description="Prepare Folder Structure" >
+			<resource name="mkdir" location="commandlineTools">
+				<argument id="p"/>
+				<argument id="dirname">
+					<value>^/Pipeline/parameters/parameter[name='outdir']/values/unique/text()^</value>
+				</argument>
+			</resource>
+		</step>
+		 <step id="FUNCTIONAL" description="Build FUNCTIONAL" precondition="^count(/Pipeline/parameters/parameter[name='functional_scan_type'])>0^">
+			<pipelet name="FunctionalLevel2QC_v2.0" location="HCP_QC_PARALLEL/Wrapper_QC"> 
+				<parameters>
+						<name>pipelet_prefix</name>
+						<values><unique>FUNCTIONAL</unique></values>
+				</parameters>
+				<parameters>
+						<name>workdir</name>
+						<values><unique>^concat(/Pipeline/parameters/parameter[name='outdir']/values/unique/text(),'/FUNCTIONAL')^</unique></values>
+				</parameters>
+		         </pipelet>
+		</step> 
+	</steps>
+</Pipeline>

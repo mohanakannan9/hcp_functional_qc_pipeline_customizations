@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSPY v2004 rel. 3 U (http://www.xmlspy.com) by Mohana Ramaratnam (Washington University) -->
+<Pipeline xmlns="http://nrg.wustl.edu/pipeline" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://nrg.wustl.edu/pipeline
+..\..\schema\pipeline.xsd" xmlns:nrgString="http://www.xnat.org/java/org.nrg.pipeline.utils.StringUtils" xmlns:fileUtils="http://www.xnat.org/java/org.nrg.imagingtools.utils.FileUtils" xmlns:ext="org.nrg.validate.utils.ProvenanceUtils">
+	<name>FunctionalLevel2QC_v2.0</name>
+	<!--Should be  Name of the pipeline XML file -->
+	<location>Wrapper_QC</location>
+	<!-- Filesystem path to the pipeline XML -->
+	<description>Pipeline which launches the Level 2 QC for Functional scans of IntraDB</description>
+	<documentation>
+	   <authors>
+	   	<author>
+	   		<lastname>Tony</lastname>
+			<firstname>Wilson</firstname>
+	   	</author>
+	   	<author>
+	   		<lastname>Mohana</lastname>
+			<firstname>Ramaratnam</firstname>
+	   	</author>
+	   </authors>
+	   	<version>1.0</version>
+		<input-parameters>
+			<parameter>
+				<name>xnat_id</name>
+				<values>
+					<schemalink>xnat:mrSessionData.ID</schemalink>
+				</values>
+				<description>XNAT MRSession ID</description>
+			</parameter>
+			<parameter>
+				<name>sessionId</name>
+				<values>
+					<schemalink>xnat:mrSessionData.label</schemalink>
+				</values>
+				<description>Projects MRSession ID</description>
+			</parameter>
+			<parameter>
+				<name>project</name>
+				<values>
+					<schemalink>xnat:mrSessionData.project</schemalink>
+				</values>
+				<description>XNAT MRSession Project </description>
+			</parameter>
+			<parameter>
+				<name>functional_scan_type</name>
+				<values>
+					<csv>MPRAGE</csv>
+				</values>
+				<description>Scantype of the Structural Scans</description>
+			</parameter>
+		</input-parameters>
+	</documentation>
+	<xnatInfo appliesTo="xnat:mrSessionData">
+			<generatesElements>
+				<element>xnat:qcAssessmentData</element>
+			</generatesElements>
+	</xnatInfo>
+	<outputFileNamePrefix>^concat(/Pipeline/parameters/parameter[name='builddir']/values/unique/text(),'/',/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),'/logs/',/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),'_FunctionalLevel2QC')^</outputFileNamePrefix>
+	<loop id="functionalscans" xpath="^/Pipeline/parameters/parameter[name='functional_usable_scanids']/values/list^"/> 
+
+	<!-- Description of the Pipeilne -->
+	<parameters>
+		<!-- Supply the following parameters 	-->
+		<!-- Default section -->
+		<parameter>
+			<name>functional_scan_type_count</name>
+			<values>
+				<unique>^if (count(/Pipeline/parameters/parameter[name='functional_scan_type']/values/unique) > 0) then 1 else if ( count(/Pipeline/parameters/parameter[name='functional_scan_type']/values/list)>1) then count(/Pipeline/parameters/parameter[name='functional_scan_type']/values/list) else 0^</unique>
+			</values>
+		</parameter>
+		 <parameter>
+			<name>functional_usable_scanids</name>
+			<values>
+				<list>^if (/Pipeline/parameters/parameter[name='functional_scan_type_count']/values/unique/text() = 1) then if (string(number(/Pipeline/parameters/parameter[name='functional_scan_type']/values/unique/text()))='NaN') then fileUtils:GetScanIdsByType(/Pipeline/parameters/parameter[name='host']/values/unique/text(),/Pipeline/parameters/parameter[name='user']/values/unique/text(),/Pipeline/parameters/parameter[name='pwd']/values/unique/text(),/Pipeline/parameters/parameter[name='xnat_id']/values/unique/text(),/Pipeline/parameters/parameter[name='functional_scan_type']/values/unique/text()) else /Pipeline/parameters/parameter[name='functional_scan_type']/values/unique/text() else if (string(number(/Pipeline/parameters/parameter[name='functional_scan_type']/values/list[1]/text()))='NaN') then fileUtils:GetScanIdsByType(/Pipeline/parameters/parameter[name='host']/values/unique/text(),/Pipeline/parameters/parameter[name='user']/values/unique/text(),/Pipeline/parameters/parameter[name='pwd']/values/unique/text(),/Pipeline/parameters/parameter[name='xnat_id']/values/unique/text(),/Pipeline/parameters/parameter[name='functional_scan_type']/values/list) else /Pipeline/parameters/parameter[name='functional_scan_type']/values/list^</list>
+			</values>
+		</parameter>
+		<parameter>
+			<name>batch_file</name>
+			<values>
+				<unique>^concat(/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),'_functional_',/Pipeline/parameters/parameter[name='datestamp_folder']/values/unique/text(),'.batch')^</unique>
+			</values>
+		</parameter>
+  		<parameter>
+			<name>fourier_slope_statistics_dir</name>
+			<values>
+				<unique>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/FourierSlope')^</unique>
+			</values>
+		</parameter>
+ 		<parameter>
+			<name>fourier_slope_statistics_tempdir</name>
+			<values>
+				<unique>^concat(/Pipeline/parameters/parameter[name='fourier_slope_statistics_dir']/values/unique/text(),'/temp')^</unique>
+			</values>
+		</parameter>
+		<parameter>
+			<name>motionoutlierdir</name>
+			<values>
+				<unique>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/MotionOutlier')^</unique>
+			</values>
+		</parameter>
+		<parameter>
+			<name>motionoutlierdir_temp</name>
+			<values>
+				<unique>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/MotionOutlier_TEMP')^</unique>
+			</values>
+		</parameter>
+		<parameter>
+			<name>birndir</name>
+			<values>
+				<unique>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/BIRN')^</unique>
+			</values>
+		</parameter> 
+  		<parameter>
+			<name>wavelet_kurtosis_dir</name>
+			<values>
+				<unique>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/WaveletKurtosis')^</unique>
+			</values>
+		</parameter>
+ 		<parameter>
+			<name>waveletkurtosis_tempdir</name>
+			<values>
+				<unique>^concat(/Pipeline/parameters/parameter[name='wavelet_kurtosis_dir']/values/unique/text(),'/temp')^</unique>
+			</values>
+		</parameter>
+ 		<parameter>
+			<name>pipelineLogFile</name>
+			<values>
+				<unique>^concat(/Pipeline/outputFileNamePrefix/text(),'_',/Pipeline/name/text(),'.xml')^</unique>
+			</values>
+		</parameter>
+	</parameters>
+	<steps>
+		<step id="INIT" description="Prepare for Functional Level2 QC">
+			<resource name="mkdir" location="commandlineTools">
+				<argument id="p"/>
+				<argument id="dirname">
+					<value>^/Pipeline/parameters/parameter[name='workdir']/values/unique/text()^</value>
+				</argument>
+			</resource>
+			<resource name="mkdir" location="commandlineTools">
+				<argument id="p"/>
+				<argument id="dirname">
+					<value>^/Pipeline/parameters/parameter[name='fourier_slope_statistics_dir']/values/unique/text()^</value>
+				</argument>
+			</resource>
+ 			<resource name="mkdir" location="commandlineTools">
+ 				<argument id="p"/>
+ 				<argument id="dirname">
+ 					<value>^/Pipeline/parameters/parameter[name='motionoutlierdir']/values/unique/text()^</value>
+ 				</argument>
+ 			</resource>
+			<resource name="mkdir" location="commandlineTools">
+ 				<argument id="p"/>
+ 				<argument id="dirname">
+			 		<value>^/Pipeline/parameters/parameter[name='motionoutlierdir_temp']/values/unique/text()^</value>
+ 				</argument>
+ 			</resource>
+			<resource name="mkdir" location="commandlineTools">
+				<argument id="p"/>
+				<argument id="dirname">
+					<value>^/Pipeline/parameters/parameter[name='birndir']/values/unique/text()^</value>
+				</argument>
+			</resource>
+			<resource name="mkdir" location="commandlineTools">
+				<argument id="p"/>
+				<argument id="dirname">
+					<value>^/Pipeline/parameters/parameter[name='wavelet_kurtosis_dir']/values/unique/text()^</value>
+				</argument>
+			</resource>
+		</step>
+		<step id="0" description="Prepare Folder Structure" workdirectory="^/Pipeline/parameters/parameter[name='workdir']/values/unique/text()^">
+			<resource name="mkdir" location="commandlineTools">
+				<argument id="p"/>
+				<argument id="dirname">
+					<value>^concat('RAWNIFTI/',PIPELINE_LOOPON(functionalscans))^</value>
+				</argument>
+			</resource>
+		</step>
+		<step id="0a" description="Prepare FOURIER Folder Structure" workdirectory="^/Pipeline/parameters/parameter[name='fourier_slope_statistics_dir']/values/unique/text()^">
+			<resource name="mkdir" location="commandlineTools">
+				<argument id="p"/>
+				<argument id="dirname">
+					<value>^PIPELINE_LOOPON(functionalscans)^</value>
+				</argument>
+			</resource>
+		</step>
+		<step id="0b" description="Prepare MOTION Folder Structure" workdirectory="^/Pipeline/parameters/parameter[name='motionoutlierdir']/values/unique/text()^">
+			<resource name="mkdir" location="commandlineTools">
+				<argument id="p"/>
+				<argument id="dirname">
+					<value>^PIPELINE_LOOPON(functionalscans)^</value>
+				</argument>
+			</resource>
+		</step>
+		<step id="0c" description="Prepare BIRN Folder Structure" workdirectory="^/Pipeline/parameters/parameter[name='birndir']/values/unique/text()^">
+			<resource name="mkdir" location="commandlineTools">
+				<argument id="p"/>
+				<argument id="dirname">
+					<value>^PIPELINE_LOOPON(functionalscans)^</value>
+				</argument>
+			</resource>
+		</step>
+		<step id="0d" description="Prepare WaveletKurtosis Folder Structure" workdirectory="^/Pipeline/parameters/parameter[name='wavelet_kurtosis_dir']/values/unique/text()^">
+			<resource name="mkdir" location="commandlineTools">
+				<argument id="p"/>
+				<argument id="dirname">
+					<value>^PIPELINE_LOOPON(functionalscans)^</value>
+				</argument>
+			</resource>
+		</step>
+		<step id="0e" description="Prepare BIRN-DICOM Folder Structure" workdirectory="^/Pipeline/parameters/parameter[name='workdir']/values/unique/text()^">
+			<resource name="mkdir" location="commandlineTools">
+				<argument id="p"/>
+				<argument id="dirname">
+					<value>^concat('RAWDICOM/',PIPELINE_LOOPON(functionalscans))^</value>
+				</argument>
+			</resource>
+		</step>
+		<step id="0f" description="Create the CSH Params File" workdirectory="^/Pipeline/parameters/parameter[name='workdir']/values/unique/text()^">
+			<resource name="ParamsToCshParams" location="xnat_tools/resources">
+				<argument id="outfile">
+					<value>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/',/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),'_functional.params')^</value>
+				</argument>
+				<argument id="skip">
+					<value>pwd</value>
+				</argument>
+				<argument id="script">
+					<value>@PIPELINE_DIR_PATH@/catalog/pipeline-tools/resources/ParamsToBashParams.xsl</value>
+				</argument>
+			</resource>
+		</step>
+		<step id="BATCH_FILE" description="Create launch command file" workdirectory="^/Pipeline/parameters/parameter[name='workdir']/values/unique/text()^">
+			<resource name="functional_batch_script_generator" location="HCP_QC_PARALLEL/Wrapper_QC/resources">
+				<argument id="paramsfile">
+					<value>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/',/Pipeline/parameters/parameter[name='sessionId']/values/unique/text(),'_functional.params')^</value>
+				</argument>
+				<argument id="scancount">
+					<value>^count(/Pipeline/parameters/parameter[name='functional_usable_scanids']/values/list)^</value>
+				</argument>
+				<argument id="batchfile">
+					<value>^concat(/Pipeline/parameters/parameter[name='workdir']/values/unique/text(),'/',/Pipeline/parameters/parameter[name='batch_file']/values/unique/text())^</value>
+				</argument>
+			</resource>
+		</step>		
+	</steps>
+</Pipeline>

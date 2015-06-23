@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pip:Resource xmlns:pip="http://nrg.wustl.edu/pipeline">
+<!--	<prov:version>0.1</prov:version>
+-->	<pip:name>ResourceRest.py</pip:name>
+	<pip:location>/data/intradb/pipeline/catalog/ToolsHCP/resources/scripts</pip:location>
+	<pip:type>Executable</pip:type>
+	<pip:commandPrefix>source /nrgpackages/scripts/epd-python_setup.sh; python </pip:commandPrefix>
+  <pip:input>
+    <pip:argument id="Server" >
+      <pip:name>W</pip:name>
+      <pip:description>Server for data</pip:description>
+    </pip:argument>
+    <pip:argument id="username" >
+      <pip:name>u</pip:name>
+      <pip:description>username</pip:description>
+    </pip:argument>
+    <pip:argument id="password" isSensitive="true" >
+      <pip:name>p</pip:name>
+      <pip:description>password</pip:description>
+    </pip:argument>
+    <pip:argument id="Project" >
+      <pip:name>P</pip:name>
+      <pip:description>Project for data</pip:description>
+    </pip:argument>
+    <pip:argument id="Subject" >
+      <pip:name>S</pip:name>
+      <pip:description>Subject for data</pip:description>
+    </pip:argument>
+    <pip:argument id="SourceDir" >
+      <pip:name>d</pip:name>
+      <pip:description>Source dir in Resources</pip:description>
+    </pip:argument>
+    <pip:argument id="SourceFile" >
+      <pip:name>f</pip:name>
+      <pip:description>Source file in Resources</pip:description>
+    </pip:argument>
+    <pip:argument id="SourceStrip" >
+      <pip:name>x</pip:name>
+      <pip:description>Strip session info from resultant files (bool)</pip:description>
+    </pip:argument>
+    <pip:argument id="DataType" >
+      <pip:name>T</pip:name>
+      <pip:description>Strip session info from resultant files (bool)</pip:description>
+    </pip:argument>
+    <pip:argument id="DestinationDir" >
+      <pip:name>D</pip:name>
+      <pip:description>Where do you want the file(s) to go?</pip:description>
+    </pip:argument>
+  </pip:input>
+</pip:Resource>
+
+<!---W https://hcpi-dev-cuda00.nrg.mir/ -u tony -p passfoo -P PARCEL_PILOT -S CP10104 -s Details -d T1w -f T1w_acpc_dc_brain.nii.gz -D /home/NRG/jwilso01/nifti/T1w-->
+
+

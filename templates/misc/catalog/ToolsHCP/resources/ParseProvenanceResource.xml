@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pip:Resource xmlns:pip="http://nrg.wustl.edu/pipeline">
+<!--	<prov:version>0.1</prov:version>
+-->	<pip:name>parseMaskProvPasswords.py</pip:name>
+	<pip:location>/data/intradb/pipeline/catalog/ToolsHCP/resources/scripts</pip:location>
+	<pip:type>Executable</pip:type>
+	<pip:commandPrefix>source /nrgpackages/scripts/epd-python_setup.sh; python </pip:commandPrefix>
+  <pip:input>
+    <pip:argument id="InputDirectoryFile" >
+      <pip:name>iDF</pip:name>
+      <pip:description>Input directory and file</pip:description>
+    </pip:argument>
+  </pip:input>
+</pip:Resource>
+
+
+
+
